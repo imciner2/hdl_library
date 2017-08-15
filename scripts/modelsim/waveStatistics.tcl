@@ -75,10 +75,15 @@ when -label stats_falling_watch "$statsSignal = '0'" {
 # This procedure will reset the statistics
 echo "Creating statistics reset function"
 proc waveReset {} {
+  echo "Resetting wave statistics"
   global low_avg
   global low_lst
+  global low_cnt
   global high_avg
   global high_lst
+  global high_cnt
+  global prev_time
+  global Now
 
   set low_avg  0
   set low_lst  0
@@ -86,6 +91,8 @@ proc waveReset {} {
   set high_avg 0
   set high_lst 0
   set high_cnt 0
+
+  set prev_time $Now
 }
 
 # This procedure will calculate/display the statistics of the signal
