@@ -43,7 +43,7 @@ architecture behavioral of pwm is
   signal reach_per : std_logic;
 
 begin
-  pwm_combo : process (gen_state_ps, cnt, period, duty) is
+  pwm_combo : process (en, gen_state_ns, gen_state_ps, reach_dty, reach_per, cnt, period, duty) is
   begin
     case gen_state_ps is
     when UPDATE =>
@@ -67,7 +67,7 @@ begin
 
       -- Only transition when the duty cycle has been reached
       gen_state_ns <= HIGH;
-      if (reach_dty) then
+      if (reach_dty = '1') then
         gen_state_ns <= LOW;
       end if;
 
@@ -79,40 +79,48 @@ begin
 
       -- Only transition when the period has be reached
       gen_state_ns <= LOW;
-      if (reach_per) then
+      if (reach_per = '1') then
         gen_state_ns <= UPDATE;
       end if;
     end case;
 
     -- Test to see if the duty cycle has been reached
     if ( cnt >= duty ) then
-      reach_dty <= 1;
+      reach_dty <= '1';
     else
-      reach_dty <= 0;
+      reach_dty <= '0';
     end if;
 
     -- Test to see if the period has been reached
     if ( cnt >= period ) then
-      reach_per <= 1;
+      reach_per <= '1';
     else
-      reach_per <= 0;
+      reach_per <= '0';
     end if;
   end process;
 
-  pwm_reg : process ( clk, pwm_period, pwm_duty, slv_reg0, slv_reg1 ) is
+  pwm_reg : process ( clk, rst, pwm_period, pwm_duty, latchVal, runCnt, gen_state_ns ) is
   begin
     if ( rst = '1' ) then
-      pwm_state_ps <= UPDATE;
+      gen_state_ps <= UPDATE;
+
+      -- Initialize values to known values
+      duty   <= to_unsigned(0, PWM_CNT_BIT_WIDTH);
+      cnt    <= to_unsigned(1, PWM_CNT_BIT_WIDTH);
+      period <= to_unsigned(0, PWM_CNT_BIT_WIDTH);
 
     elsif(rising_edge(clk)) then
 
-      if (pwm_latchVal = '1') then
-        -- Latch the values for the period and the duty cycle
+      if (latchVal = '1') then
+        -- Latch the duty cycle for the next period
         duty   <= pwm_duty;
-        period <= pwm_period;
+
+        -- Latch the period
+        -- Subtract 1 to allow for the 1 cycle delay of the next update stage without adding an additional low period
+        period <= pwm_period - 1;
         
-        -- Reset the PWM counter
-        cnt    <= to_unsigned(0, PWM_CNT_BIT_WIDTH);
+        -- Reset the PWM counter to 1 to ensure proper counting
+        cnt    <= to_unsigned(1, PWM_CNT_BIT_WIDTH);
       elsif (runCnt = '1') then
         -- Increment the pwm counter when running
         cnt <= cnt + 1;
