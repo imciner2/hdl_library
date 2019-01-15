@@ -124,6 +124,7 @@ begin
       -- Reset the counter and state machine
       counter <= to_unsigned(1, CNT_SIZE);
       cnt_out_c <= (others => '0');
+      cnt_new_c <= '0';
       timer_ps <= WAITING_START;
 
     elsif ( rising_edge( CLK ) ) then
