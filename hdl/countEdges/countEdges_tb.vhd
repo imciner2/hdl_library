@@ -15,13 +15,23 @@ architecture tb of countEdges_tb is
     constant T : time := 10 ps;
 
     signal clock, reset : std_logic;
-    
+
     signal sense_edge : std_logic;
 
     signal cnt : std_logic_vector( CNT_SIZE-1 downto 0 );
     signal newCntFlag : std_logic;
 
     signal time_max : unsigned( TIME_SIZE-1 downto 0 );
+
+    -- A procedure to pulse the line and then wait for the desired time
+    procedure pulse(        waitTime   : in integer := 0;
+                     signal sense_edge : out std_logic ) is
+    begin
+        sense_edge <= '1';
+        wait for T;
+        sense_edge <= '0';
+        wait for waitTime*T;
+    end procedure pulse;
 
 begin
     UUT : entity work.countEdges
@@ -69,73 +79,31 @@ begin
         wait for 5*T;
 
         -- Give some edges
-        sense_edge <= '1';
-        wait for T;
-        sense_edge <= '0';
-        wait for 4*T;
+        pulse( 4, sense_edge );
+        pulse( 9, sense_edge );
+        pulse( 14, sense_edge );
+        pulse( 4, sense_edge );
+        pulse( 2, sense_edge );
+        pulse( 4, sense_edge );
+        pulse( 4, sense_edge );
 
-        sense_edge <= '1';
-        wait for T;
-        sense_edge <= '0';
-        wait for 9*T;
+        assert unsigned(cnt) = 7
+            report "Counter incorrect"
+            severity error;
 
-        sense_edge <= '1';
-        wait for T;
-        sense_edge <= '0';
-        wait for 14*T;
-
-        sense_edge <= '1';
-        wait for T;
-        sense_edge <= '0';
-        wait for 4*T;
-
-        sense_edge <= '1';
-        wait for T;
-        sense_edge <= '0';
-        wait for 2*T;
-
-        sense_edge <= '1';
-        wait for T;
-        sense_edge <= '0';
-        wait for 4*T;
-
-        -- Give some more edges
-        sense_edge <= '1';
-        wait for T;
-        sense_edge <= '0';
-        wait for 4*T;
-
-        sense_edge <= '1';
-        wait for T;
-        sense_edge <= '0';
-        wait for 9*T;
-
-        sense_edge <= '1';
-        wait for T;
-        sense_edge <= '0';
-        wait for 14*T;
-
-        sense_edge <= '1';
-        wait for T;
-        sense_edge <= '0';
-        wait for 4*T;
-
-        sense_edge <= '1';
-        wait for T;
-        sense_edge <= '0';
-        wait for 2*T;
-
-        sense_edge <= '1';
-        wait for T;
-        sense_edge <= '0';
-        wait for 4*T;
+        pulse( 9, sense_edge );
+        pulse( 14, sense_edge );
+        pulse( 4, sense_edge );
+        pulse( 2, sense_edge );
+        pulse( 4, sense_edge );
 
         wait for 20*T;
 
-        sense_edge <= '1';
-        wait for T;
-        sense_edge <= '0';
-        wait for 55*T;
+        assert unsigned(cnt) = 5
+            report "Counter incorrect"
+            severity error;
+
+        pulse( 55, sense_edge );
 
         wait for 5*T;
         reset <= '1';
